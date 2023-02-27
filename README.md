@@ -85,15 +85,13 @@ To reproduce the results of I$^2$-GNN on ogb-molhiv (Table 5 in the paper), run:
 
 [https://arxiv.org/abs/2210.13978](https://arxiv.org/abs/2210.13978)
 
-`@article{huang2022boosting,
-
+```
+@article{huang2022boosting,
   title={Boosting the Cycle Counting Power of Graph Neural Networks with I $\^{} 2$-GNNs},
-
   author={Huang, Yinan and Peng, Xingang and Ma, Jianzhu and Zhang, Muhan},
-
   journal={arXiv preprint arXiv:2210.13978},
-
   year={2022}
-}`
+}
+```
 
 If you have any question about the code, please feel free to contact Yinan Huang (yinan8114@gmail.com)!
