@@ -17,10 +17,10 @@ subgraphs for each node, assign the root node a unique identifier and encode the
 node’s representation within its rooted subgraph. Specifically, we prove that Subgraph
 MPNNs fail to count more-than-4-cycles at node level, implying that node representations
 cannot correctly encode the surrounding substructures like ring systems with more than
-four atoms. To overcome this limitation, we propose I$^2$-GNNs to extend Subgraph MPNNs
-by assigning different identifiers for the root node and its neighbors in each subgraph. I$^2$-
+four atoms. To overcome this limitation, we propose I2-GNNs to extend Subgraph MPNNs
+by assigning different identifiers for the root node and its neighbors in each subgraph. I2-
 GNNs’ discriminative power is shown to be strictly stronger than Subgraph MPNNs and
-partially stronger than the 3-WL test. More importantly, I$^2$-GNNs are proven capable of
+partially stronger than the 3-WL test. More importantly, I2-GNNs are proven capable of
 counting all 3, 4, 5 and 6-cycles, covering common substructures like benzene rings in
 organic chemistry, while still keeping linear complexity. To the best of our knowledge,
 it is the first linear-time GNN model that can count 6-cycles with theoretical guarantees.
@@ -44,20 +44,24 @@ The following dependencies are required for this project:
 ## Usages
 ### Counting graph substructures
 
-This part empirically evaluates the stronger counting power of I$^2$-GNNs compared to other subgraph GNNs.
+This part empirically evaluates the stronger counting power of I2-GNNs compared to other subgraph GNNs.
 
-To reproduce the counting results of I$^2$-GNNs (Table 2, 3 in the paper), run
+To reproduce the counting results of I2-GNNs (Table 2, 3 in the paper), run
 
-`bash run_count.sh I2GNN`
+```
+bash run_count.sh I2GNN
+```
 
 to execute training and test on all cycles and graphlets mentioned in the paper. Replace parameter "I2GNN" with "NGNN", "IDGNN", "GNNAK", "PPGN" and "GNN" to get the results for other baseline models.
 
 
 ### QM9
 
-To reproduce the results of I$^2$-GNN on QM9 (Table 4 in the paper), run:
+To reproduce the results of I2-GNN on QM9 (Table 4 in the paper), run:
 
-`bash run_qm9.sh`
+```
+bash run_qm9.sh
+```
 
 to execute training and test on all 12 targets of QM9. 
 
@@ -67,19 +71,25 @@ to execute training and test on all 12 targets of QM9.
 Download [ZINC dataset](https://data.dgl.ai/dataset/benchmarking-gnns/ZINC.pkl) and [ZINC-full dataset](https://data.dgl.ai/dataset/benchmarking-gnns/ZINC-full.pkl) and save under "data/zinc/raw" 
 and "data/zinc-full/raw" respectively.
 
-To reproduce the results of I$^2$-GNN on ZINC (Table 5 in the paper), run:
+To reproduce the results of I2-GNN on ZINC (Table 5 in the paper), run:
 
-`bash run_zinc.sh zinc`
+```
+bash run_zinc.sh zinc
+```
 
-To reproduce the results of I$^2$-GNN on ZINC-full (Table 5 in the paper), run:
+To reproduce the results of I2-GNN on ZINC-full (Table 5 in the paper), run:
 
-`bash run_zinc.sh zinc-full`
+```
+bash run_zinc.sh zinc-full
+```
 
 
 ### OGBG-MOLHIV
-To reproduce the results of I$^2$-GNN on ogb-molhiv (Table 5 in the paper), run:
+To reproduce the results of I2-GNN on ogb-molhiv (Table 5 in the paper), run:
 
-`bash run_hiv.sh`
+```
+bash run_hiv.sh
+```
 
 ## Reference
 
