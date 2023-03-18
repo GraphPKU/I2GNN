@@ -47,7 +47,10 @@ class GNN(torch.nn.Module):
         self.fc3 = torch.nn.Linear(16, 1)
 
     def forward(self, data):
-        num_nodes = torch.sum(data.num_nodes)
+        if len(data.num_nodes) > 1:
+            num_nodes = torch.sum(data.num_nodes)
+        else:
+            num_nodes = data.num_nodes
         x = torch.zeros([num_nodes, 8]).to(data.edge_index.device)
         xs = []
         for conv in self.convs:

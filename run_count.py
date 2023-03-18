@@ -14,7 +14,7 @@ import data_processing as dp
 # from torchmetrics import AUROC
 # from k_gnn import TwoMalkin, ConnectedThreeMalkin, TwoLocal, ThreeMalkin, ThreeLocal
 
-from utils import create_subgraphs, create_subgraphs2
+from utils import create_subgraphs, create_subgraphs2, check_graphlet
 from count_models import *
 
 def MyTransform(data):
@@ -143,12 +143,41 @@ if args.use_rd:
 
 # counting benchmark
 dataname = args.dataset
-train_dataset = dp.dataset_random_graph(dataname=dataname,processed_name=processed_name, transform=MyTransform,
-                                        pre_transform=my_pre_transform, split='train')
-val_dataset = dp.dataset_random_graph(dataname=dataname,processed_name=processed_name, transform=MyTransform,
-                                        pre_transform=my_pre_transform, split='val')
-test_dataset = dp.dataset_random_graph(dataname=dataname,processed_name=processed_name, transform=MyTransform,
-                                        pre_transform=my_pre_transform, split='test')
+if dataname == "chembl":
+    dataset = dp.Chembl('./data/count_chembl', processed_name=processed_name, transform=MyTransform,
+                        pre_transform=my_pre_transform)
+
+    tenpercent = int(len(dataset) * 0.1)
+    mean = dataset.data.y[2 * tenpercent:].mean(dim=0)
+    std = dataset.data.y[2 * tenpercent:].std(dim=0)
+    dataset.data.y = (dataset.data.y - mean) / std
+    print('Mean = %.3f, Std = %.3f' % (mean[args.target], std[args.target]))
+
+    test_dataset = dataset[:2 * tenpercent]
+    val_dataset = dataset[2 * tenpercent:4 * tenpercent]
+    train_dataset = dataset[int(4 * tenpercent):]
+
+else:
+    train_dataset = dp.dataset_random_graph(dataname=dataname,processed_name=processed_name, transform=MyTransform,
+                                            pre_transform=my_pre_transform, split='train')
+    val_dataset = dp.dataset_random_graph(dataname=dataname,processed_name=processed_name, transform=MyTransform,
+                                            pre_transform=my_pre_transform, split='val')
+    test_dataset = dp.dataset_random_graph(dataname=dataname,processed_name=processed_name, transform=MyTransform,
+                                            pre_transform=my_pre_transform, split='test')
+
+    # check ground truth
+    # check_graphlet(train_dataset, args.target)
+    # check_graphlet(test_dataset, args.target)
+    # check_graphlet(val_dataset, args.target)
+
+    # normalize target
+    y_train_val = torch.cat([train_dataset.data.y, val_dataset.data.y], dim=0)
+    mean = y_train_val.mean(dim=0)
+    std = y_train_val.std(dim=0)
+    train_dataset.data.y = (train_dataset.data.y - mean) / std
+    val_dataset.data.y = (val_dataset.data.y - mean) / std
+    test_dataset.data.y = (test_dataset.data.y - mean) / std
+    print('Mean = %.3f, Std = %.3f' % (mean[args.target], std[args.target]))
 
 
 # ablation study for I2GNN
@@ -158,14 +187,6 @@ if args.ab:
 
 
 
-# normalize target
-y_train_val = torch.cat([train_dataset.data.y, val_dataset.data.y], dim=0)
-mean = y_train_val.mean(dim=0)
-std = y_train_val.std(dim=0)
-train_dataset.data.y = (train_dataset.data.y - mean) / std
-val_dataset.data.y = (val_dataset.data.y - mean) / std
-test_dataset.data.y = (test_dataset.data.y - mean) / std
-print('Mean = %.3f, Std = %.3f' % (mean[args.target], std[args.target]))
 
 
 

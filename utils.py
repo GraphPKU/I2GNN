@@ -14,7 +14,7 @@ from torch_scatter import scatter_min
 from batch import Batch
 from collections import defaultdict
 from copy import deepcopy
-
+import networkx as nx
 
 
 def create_subgraphs3(data, h=1, sample_ratio=1.0, max_nodes_per_hop=None,
@@ -906,5 +906,54 @@ def subgraph_to_subgraph2(d, num_hops, center=0, node_label='spd', use_rd=False)
 
 def colored(r, g, b, text):
     return "\033[38;2;{};{};{}m{} \033[38;2;255;255;255m".format(r, g, b, text)
+
+
+def pyg2nx(data):
+    # torch_geometric data to networkx
+    G = nx.Graph()
+    G.add_nodes_from([i for i in range(data.num_nodes)])
+    edges = [(int(edge[0]), int(edge[1])) for edge in data.edge_index.T]
+    G.add_edges_from(edges)
+    return G
+
+from networkx.algorithms import isomorphism
+def count_graphlet(G, target):
+    # G is a networkx graph
+    # target: 0 for tailed triangle, 1 for chordal cycle, 2 for 4-clique, 3 for 4-path and 4 for triangle-rectangle
+    y = torch.zeros(len(G))
+    H = nx.Graph()
+    if target == 0:
+        H.add_edges_from([('*', 1), (1, 2), (1, 3), (2, 3)])
+        factor = 1 / 2
+    elif target == 1:
+        H.add_edges_from([('*', 1), ('*', 2), (1, 2), (1, 3), (2, 3)])
+        factor = 1 / 2
+    elif target == 2:
+        H.add_edges_from([('*', 1), ('*', 2), ('*', 3), (1, 2), (1, 3), (2, 3)])
+        factor = 1 / 3
+    elif target == 3:
+        H.add_edges_from([('*', 1), (1, 2), (2, 3), (3, 4)])
+        factor = 1
+    elif target == 4:
+        H.add_edges_from([('*', 1), ('*', 2), (1, 2), (2, 3), (3, 4), (1, 4)])
+        factor = 1 / 2
+
+    GM = isomorphism.GraphMatcher(G, H)
+    for map in GM.subgraph_monomorphisms_iter():  # subgraph counting
+        node_idx = list(map.keys())[list(map.values()).index('*')]
+        y[node_idx] += 1
+    return y * factor # remove repeated self-isomorphism
+
+
+def check_graphlet(dataset, target):
+    for i, data in enumerate(dataset):
+        if i % 500 == 0:
+            print('checking ground truth labels...(%d/%d)'%(i, len(dataset)))
+        G = pyg2nx(data)
+        y = count_graphlet(G, target)
+        assert torch.sum(torch.abs(y - data.y)) < 1e-9
+
+
+
 
 

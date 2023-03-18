@@ -1084,3 +1084,102 @@ class TUDataset(InMemoryDataset):
 
     def __repr__(self) -> str:
         return f'{self.name}({len(self)})'
+
+
+
+import pickle
+class Chembl(InMemoryDataset):
+
+    def __init__(self, root: str, processed_name: str = 'processed', transform: Optional[Callable] = None,
+                 pre_transform: Optional[Callable] = None,
+                 pre_filter: Optional[Callable] = None):
+        self.processed_name = processed_name
+        super().__init__(root, transform, pre_transform, pre_filter)
+        self.data, self.slices = torch.load(self.processed_paths[0])
+
+    @property
+    def raw_file_names(self) -> List[str]:
+        return ['chembl.pkl']
+
+    @property
+    def processed_dir(self):
+        return os.path.join(self.root, self.processed_name)
+
+    @property
+    def processed_file_names(self) -> str:
+        return 'data_processed.pt'
+
+    def process(self):
+        try:
+            import rdkit
+            from rdkit import Chem, RDLogger
+            from rdkit.Chem.rdchem import BondType as BT
+            from rdkit.Chem.rdchem import HybridizationType
+            RDLogger.DisableLog('rdApp.*')
+
+        except ImportError:
+            rdkit = None
+
+        with open(self.raw_paths[0], 'rb') as f:
+            smiles_list = pickle.load(f)
+
+
+        data_list = []
+        for i, sm in enumerate(smiles_list):
+            if i % 500 == 0:
+                print('Pre-processing: %d/%d' %(i, len(smiles_list)))
+            mol = Chem.MolFromSmiles(sm)
+            N = mol.GetNumAtoms()
+
+            # x
+            x = torch.zeros([N, ], dtype=torch.long)
+
+            # edge
+            row, col, edge_type = [], [], []
+            for bond in mol.GetBonds():
+                start, end = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+                row += [start, end]
+                col += [end, start]
+                edge_type += 2 * [1]
+
+            edge_index = torch.tensor([row, col], dtype=torch.long)
+            edge_type = torch.tensor(edge_type, dtype=torch.long)
+            edge_attr = torch.reshape(edge_type, [-1, 1]).to(torch.float)
+
+            perm = (edge_index[0] * N + edge_index[1]).argsort()
+            edge_index = edge_index[:, perm]
+            edge_type = edge_type[perm]
+            edge_attr = edge_attr[perm]
+
+            data = Data(x=x, edge_index=edge_index,
+                        edge_attr=edge_attr, name=sm)
+
+            # calculate rings
+            size_list = [3, 4, 5, 6, 7]
+            ssr = Chem.GetSymmSSSR(mol)
+            ssr = [list(s) for s in ssr]
+            n_kring_graph = np.zeros([1, len(size_list)], dtype=np.int)
+            n_kring_node = np.zeros((N, len(size_list)), dtype=np.int)
+            for ring in ssr:
+                size = len(ring)
+                if size not in size_list:
+                    continue
+                # node level
+                for atom in ring:
+                    n_kring_node[atom, size_list.index(size)] += 1
+                # graph level
+                n_kring_graph[0, size_list.index(size)] += 1
+            n_kring_graph = torch.tensor(n_kring_graph, dtype=torch.int)
+            n_kring_node = torch.tensor(n_kring_node, dtype=torch.int)
+            data.n_kring_graph = n_kring_graph
+            # data.n_kring_node = n_kring_node
+            data.y = n_kring_node.float()
+
+            if self.pre_filter is not None and not self.pre_filter(data):
+                continue
+            if self.pre_transform is not None:
+                data = self.pre_transform(data)
+
+            data_list.append(data)
+
+        torch.save(self.collate(data_list), self.processed_paths[0])
