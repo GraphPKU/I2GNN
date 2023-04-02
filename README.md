@@ -1,5 +1,7 @@
 # Boosting the Cycle Counting Power of Graph Neural Networks with I$^2$-GNNs
 
+**[IMPORTANT UPDATE]** There was an incorrect ground-truth labeling for raw data "./data/count_graphlet/raw/data.mat" in the version before 2023/3/17. We corrected the labels in this repo and updated our experimental results. Sorry for any inconvenience and confusion.
+
 ## About
 This repository contains the official code for the paper [Boosting the Cycle Counting Power of Graph Neural Networks with I $^2$-GNNs](https://arxiv.org/abs/2210.13978). 
 
