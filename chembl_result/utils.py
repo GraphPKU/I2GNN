@@ -259,7 +259,7 @@ def create_subgraphs2(data, h=1, sample_ratio=1.0, max_nodes_per_hop=None,
 
 
 def create_subgraphs(data, h=1, sample_ratio=1.0, max_nodes_per_hop=None,
-                     node_label='hop', use_rd=False, subgraph_pretransform=None, save_relabel=False):
+                     node_label='hop', use_rd=False, subgraph_pretransform=None, save_relabel=True):
     # Given a PyG graph data, extract an h-hop rooted subgraph for each of its
     # nodes, and combine these node-subgraphs into a new large disconnected graph
     # If given a list of h, will return multiple subgraphs for each node stored in
